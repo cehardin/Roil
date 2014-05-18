@@ -25,6 +25,8 @@ import static java.util.Comparator.naturalOrder;
 import static cehardin.roil.util.Optionals.optionalComparator;
 
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * The schema for a relation. One can think of this as the definition of what
@@ -33,7 +35,7 @@ import java.util.Optional;
  * @author Chad
  * @see Relation
  */
-public final class RelationSchema implements Comparable<RelationSchema> {
+public final class RelationSchema implements Comparable<RelationSchema>, Projectable<RelationSchema> {
 
     private final Attributes attributes;
     private final Optional<PrimaryKey> primaryKey;
@@ -43,6 +45,14 @@ public final class RelationSchema implements Comparable<RelationSchema> {
         this.attributes = requireNonNull(attributes, "Attributes was null");
         this.primaryKey = requireNonNull(primaryKey, "Primary Key was null");
         this.secondaryKeys = requireNonNull(secondaryKeys, "Secondary Keys was null");
+    }
+
+    @Override
+    public Function<Predicate<AttributeName>, RelationSchema> getProjector() {
+        return (p) -> new RelationSchema(
+                attributes.project(p), 
+                primaryKey.isPresent() && p.test(primaryKey.get().getAttributeName()) ? primaryKey : Optional.empty(),
+                secondaryKeys.project(p));
     }
 
     /**
@@ -103,9 +113,9 @@ public final class RelationSchema implements Comparable<RelationSchema> {
             result = true;
         } else if (getClass().isInstance(o)) {
             final RelationSchema other = getClass().cast(o);
-            result = deepEquals(attributes, other.attributes) && 
-                    deepEquals(primaryKey, other.primaryKey) && 
-                    deepEquals(secondaryKeys, other.secondaryKeys);
+            result = deepEquals(attributes, other.attributes)
+                    && deepEquals(primaryKey, other.primaryKey)
+                    && deepEquals(secondaryKeys, other.secondaryKeys);
         } else {
             result = false;
         }

@@ -16,12 +16,13 @@
  */
 package cehardin.roil;
 
-import cehardin.roil.exception.InvalidNameException;
-
 import static java.lang.String.format;
 
+import cehardin.roil.exception.InvalidNameException;
+
+
 /**
- *
+ * A name for an attribute, which identifies a value in a tuple.
  * @author Chad
  */
 public final class AttributeName extends Name implements Comparable<AttributeName> {
@@ -32,12 +33,7 @@ public final class AttributeName extends Name implements Comparable<AttributeNam
     
     @Override
     public int compareTo(AttributeName o) {
-        if(o == null) {
-            return 1;
-        }
-        else {
-            return getValue().compareTo(o.getValue());
-        }
+        return o == null ? 1 : getValue().compareTo(o.getValue());
     }
 
     @Override

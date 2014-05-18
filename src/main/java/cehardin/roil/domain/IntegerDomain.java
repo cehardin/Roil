@@ -17,70 +17,29 @@
 package cehardin.roil.domain;
 
 import cehardin.roil.Domain;
-import java.util.Iterator;
-import java.util.function.Supplier;
+import java.util.SortedSet;
 
-import static java.lang.Integer.MIN_VALUE;
-import static java.lang.Integer.MAX_VALUE;
+import static java.util.Comparator.naturalOrder;
 
 /**
  *
  * @author Chad
  */
-public final class IntegerDomain extends AbstractIteratorBasedFiniteDomain<Integer> {
-
-    private static final class IntegerIterator implements Iterator<Integer> {
-
-        private int number = MIN_VALUE;
-
-        @Override
-        public boolean hasNext() {
-            return number != MAX_VALUE;
-        }
-
-        @Override
-        public Integer next() {
-            return number++;
-        }
-    };
-
-    private static final class IntegerIteratorSupplier implements Supplier<Iterator<Integer>> {
-
-        @Override
-        public Iterator<Integer> get() {
-            return new IntegerIterator();
-        }
-    }
-    private static final IntegerIteratorSupplier SUPPLIER = new IntegerIteratorSupplier();
+public final class IntegerDomain implements Domain<Integer> {
 
     @Override
     public String getName() {
-        return "INTEGER";
+        return "Integer";
     }
 
     @Override
-    public boolean isIn(Integer o) {
-        return o != null;
+    public SortedSet<Integer> getRange() {
+        return new RangeSet<>(
+                Integer.class,
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE,
+                naturalOrder(),
+                (i) -> i + 1,
+                (i) -> i - 1);
     }
-
-    @Override
-    protected Supplier<Iterator<Integer>> getIteratorSupplier() {
-        return SUPPLIER;
-    }
-
-    @Override
-    public int compareTo(Domain<Integer> o) {
-        return getName().compareTo(o.getName());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().getName().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return getClass().isInstance(o);
-    }
-
 }

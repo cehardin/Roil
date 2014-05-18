@@ -71,6 +71,24 @@ public class Iterators {
             }
         }
     }
+    
+    private static final class ReadOnlyIterator<E> implements Iterator<E> {
+        private final Iterator<E> iterator;
+        
+        public ReadOnlyIterator(Iterator<E> iterator) {
+            this.iterator = requireNonNull(iterator, "Iterator was null");
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            return iterator.next();
+        }
+    }
 
     public static final <E extends Comparable> Comparator<Iterator<E>> iteratorComparator() {
         return new IteratorComparator<>(naturalOrder());
@@ -78,5 +96,9 @@ public class Iterators {
 
     public static final <E> Comparator<Iterator<E>> iteratorComparator(Comparator<E> elementComparator) {
         return new IteratorComparator<>(elementComparator);
+    }
+    
+    public static final <E> Iterator<E> readOnlyIterator(Iterator<E> iterator) {
+        return new ReadOnlyIterator<>(iterator);
     }
 }

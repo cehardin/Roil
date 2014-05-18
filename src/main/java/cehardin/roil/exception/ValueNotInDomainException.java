@@ -20,7 +20,7 @@ package cehardin.roil.exception;
  *
  * @author Chad
  */
-public class ValueNotInDomainException extends Exception {
+public class ValueNotInDomainException extends RuntimeException {
 
     public ValueNotInDomainException() {
     }

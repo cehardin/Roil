@@ -18,8 +18,11 @@ package cehardin.roil;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static cehardin.roil.util.Iterables.iterableComparator;
+import static cehardin.roil.util.Sets.filter;
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableSet;
@@ -29,7 +32,7 @@ import static java.util.Objects.compare;
  *
  * @author Chad
  */
-public final class SecondaryKeys implements Comparable<SecondaryKeys> {
+public final class SecondaryKeys implements Comparable<SecondaryKeys>, Projectable<SecondaryKeys> {
 
     private final Set<SecondaryKey> set;
 
@@ -45,8 +48,21 @@ public final class SecondaryKeys implements Comparable<SecondaryKeys> {
     }
 
     @Override
+    public Function<Predicate<AttributeName>, SecondaryKeys> getProjector() {
+        return (p) -> {
+            final Set<SecondaryKey> newSet = new HashSet<>();
+            set.stream().map((secondaryKey) -> secondaryKey.project(p)).forEach((newSecondaryKey) -> {
+                newSet.add(newSecondaryKey);
+            });
+            return new SecondaryKeys(newSet);
+        };
+    }
+    
+    
+
+    @Override
     public int compareTo(SecondaryKeys o) {
-        return o == null ? null : compare(set, o.set, iterableComparator());
+        return o == null ? 1 : compare(set, o.set, iterableComparator());
     }
 
     @Override

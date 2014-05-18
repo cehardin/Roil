@@ -16,38 +16,102 @@
  */
 package cehardin.roil;
 
+import static cehardin.roil.Domain.BooleanOperator.*;
+import static java.lang.String.format;
+import static java.util.Collections.unmodifiableMap;
+
 import cehardin.roil.exception.ValueNotInDomainException;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.function.BiPredicate;
+
 
 /**
  * A domain defines the acceptable values for a value.
+ * <p>
  * @author Chad
  * @see Attribute
  * @see Value
  */
 public interface Domain<T> extends Comparable<Domain<T>> {
-    
+
+    enum BooleanOperator {
+        Equal,
+        NotEqual,
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual
+    }
+
     String getName();
-    
-    boolean isFinite();
-    
-    boolean isInfinite();
-    
-    Set<T> getRange();
-    
-    
+
+    SortedSet<T> getRange();
+
+    default Map<BooleanOperator, BiPredicate<T, T>> getBooleanOperators() {
+        final Map<BooleanOperator, BiPredicate<T,T>> booleanOperators = new HashMap<>();
+        
+        booleanOperators.put(Equal, getEqualOperator());
+        booleanOperators.put(NotEqual, getNotEqualOperator());
+        booleanOperators.put(GreaterThan, getGreaterThanOperator());
+        booleanOperators.put(GreaterThanOrEqual, getGreaterThanOrEqualOperator());
+        booleanOperators.put(LessThan, getLessThanOperator());
+        booleanOperators.put(LessThanOrEqual, getLessThanOrEqualOperator());
+        
+        return unmodifiableMap(booleanOperators);
+    }
+
+    default BiPredicate<T, T> getEqualOperator() {
+        return (v1, v2) -> getRange().comparator().compare(check(v1), check(v2)) == 0;
+    }
+
+    default BiPredicate<T, T> getNotEqualOperator() {
+        return getEqualOperator().negate();
+    }
+
+    default BiPredicate<T, T> getGreaterThanOperator() {
+        return (v1, v2) -> getRange().comparator().compare(check(v1), check(v2)) > 0;
+    }
+
+    default BiPredicate<T, T> getGreaterThanOrEqualOperator() {
+        return getEqualOperator().or(getGreaterThanOperator());
+    }
+
+    default BiPredicate<T, T> getLessThanOperator() {
+        return (v1, v2) -> getRange().comparator().compare(check(v1), check(v2)) < 0;
+    }
+
+    default BiPredicate<T, T> getLessThanOrEqualOperator() {
+        return getEqualOperator().or(getLessThanOperator());
+    }
+
     /**
      * Determine if the object is in this domain.
+     * <p>
      * @param o the object to check.
      * @return true if in the domain, false otherwise.
      */
-    boolean isIn(T o);
-    
+    default boolean isIn(T o) {
+        return getRange().contains(o);
+    }
+
     /**
      * Check if the object is in the domain.
+     * <p>
      * @param o The object to check.
      * @throws ValueNotInDomainException IF the object is not in the domain.
      */
-    void check(T o) throws ValueNotInDomainException;
+    default T check(T o) throws ValueNotInDomainException {
+        if (isIn(o)) {
+            return o;
+        } else {
+            throw new ValueNotInDomainException(format("Not in domain: %s", o));
+        }
+    }
     
+    @Override
+    default public int compareTo(Domain<T> other) {
+        return getName().compareTo(other.getName());
+    }
 }

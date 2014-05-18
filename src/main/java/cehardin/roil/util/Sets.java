@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -32,4 +33,17 @@ import static java.util.Arrays.asList;
  * @author Chad
  */
 public class Sets {
+    
+    public static <T> Set<T> filter(Set<T> set, Predicate<T> p) {
+        final HashSet<T> newSet = new HashSet<>();
+        
+        for(final T t : set) {
+            if(p.test(t)) {
+                newSet.add(t);
+            }
+        }
+        
+        
+        return unmodifiableSet(newSet);
+    }
 }

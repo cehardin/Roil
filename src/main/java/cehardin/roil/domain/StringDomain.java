@@ -16,104 +16,93 @@
  */
 package cehardin.roil.domain;
 
+import static java.util.Objects.requireNonNull;
+import static java.lang.String.format;
+
 import cehardin.roil.Domain;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.function.Supplier;
+import java.util.SortedSet;
+import java.util.function.Function;
 
 /**
  *
  * @author Chad
  */
-public final class StringDomain extends AbstractIteratorBasedFiniteDomain<String> {
-
-    public static final String MIN_VALUE;
-    public static final String MAX_VALUE;
-    public static final int MAX_LENGTH = 1024;
-    private static final char[] MIN_CHARS = new char[MAX_LENGTH];
-    private static final char[] MAX_CHARS = new char[MAX_LENGTH];
-
+public final class StringDomain implements Domain<String> 
+{
+    private static final int CHAR_LENGTH = 256;
+    private static final char[] MIN_CHAR;
+    private static final char[] MAX_CHAR;
+    private static final String MIN_STRING;
+    private static final String MAX_STRING;
+    
     static {
-        for (int i = 0; i < MAX_LENGTH; i++) {
-            MIN_CHARS[i] = Character.MAX_VALUE;
-            MAX_CHARS[i] = Character.MIN_VALUE;
+        MIN_CHAR = new char[CHAR_LENGTH];
+        MAX_CHAR = new char[CHAR_LENGTH];
+        
+        for(int i=0; i < CHAR_LENGTH; i++) {
+            MIN_CHAR[i] = Character.MIN_VALUE;
+            MAX_CHAR[i] = Character.MAX_VALUE;
         }
-
-        MIN_VALUE = new String(MIN_CHARS);
-        MAX_VALUE = new String(MAX_CHARS);
+        
+        MIN_STRING = new String(MIN_CHAR);
+        MAX_STRING = new String(MAX_CHAR);
     }
-
-    private static final class StringIterator implements Iterator<String> {
-
-        private final char[] characters = MIN_CHARS.clone();
-        private int position = 0;
+    
+    private static String toString(char[] chars) {
+        return String.valueOf(chars);
+    }
+    
+    private static char[] toChars(String string) {
+        return string.toCharArray();
+    }
+    
+    private static class SuccessorFunction implements Function<char[], char[]> {
 
         @Override
-        public boolean hasNext() {
-            return !Arrays.equals(characters, MAX_CHARS);
-        }
-
-        @Override
-        public String next() {
-            final String next = new String(characters);
-
-            if (characters[position] == Character.MAX_VALUE) {
-                if (position == MAX_LENGTH - 1) {
-                    throw new NoSuchElementException();
-                }
-                characters[position + 1] = Character.MAX_VALUE;
-                for (int i = position; position >= 0; position--) {
-                    characters[i] = Character.MIN_VALUE;
-                }
-                do {
-                    position++;
-                } while (characters[position] == Character.MAX_VALUE);
-            } else {
-                characters[position]++;
+        public char[] apply(final char[] input) {
+            final char[] output;
+            int index = 0;
+            
+            if(requireNonNull(input, "Input char[] was null").length != CHAR_LENGTH) {
+                throw new IllegalArgumentException(format("Input char[] was of length %d when it must instead be %d", input.length, CHAR_LENGTH));
             }
-
-            return next;
+            
+            output = input.clone();
+            
+            while(index < CHAR_LENGTH) {
+                if(output[index] != Character.MAX_VALUE) {
+                    output[index]++;
+                    if(output[index] == Character.MAX_VALUE) {
+                        
+                    }
+                }
+            };
+            for(int i=0; i < CHAR_LENGTH; i++) {
+                if(output[i] != Character.MAX_VALUE) {
+                    output[i]++;
+                }
+                else {
+                    for(int y=(i + 1); y < CHAR_LENGTH; y++) {
+                        if(output[y] != Character.MAX_VALUE) {
+                            
+                        }
+                    }
+                }
+            }
         }
+        
     }
-
-    private static final class StringIteratorSupplier implements Supplier<Iterator<String>> {
-
-        @Override
-        public Iterator<String> get() {
-            return new StringIterator();
-        }
-    }
-
-    private static final StringIteratorSupplier SUPPLIER = new StringIteratorSupplier();
+    
 
     @Override
     public String getName() {
-        return "STRING";
+        return "String";
     }
 
     @Override
-    public boolean isIn(String o) {
-        return o != null && o.length() <= MAX_LENGTH;
+    public SortedSet<String> getRange() {
+        return new RangeSet<>(
+                String.class)
     }
-
-    @Override
-    protected Supplier<Iterator<String>> getIteratorSupplier() {
-        return SUPPLIER;
-    }
-
-    @Override
-    public int compareTo(Domain<String> o) {
-        return getName().compareTo(o.getName());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().getName().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return getClass().isInstance(o);
-    }
+    
 }

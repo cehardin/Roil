@@ -16,10 +16,14 @@
  */
 package cehardin.roil.util;
 
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
@@ -92,11 +96,38 @@ public final class Maps {
         }
     }
 
+    private static class KeyFilter<K, V> implements BiFunction<Map<K, V>, Predicate<K>, Map<K, V>> {
+        @Override
+        public Map<K, V> apply(Map<K, V> input, Predicate<K> keyPredicate) {
+            final HashMap<K, V> output = new HashMap<>();
+
+            requireNonNull(keyPredicate, "Key Predicate was null");
+            for (final Entry<K, V> entry : requireNonNull(input, "Input was null").entrySet()) {
+                final K key = entry.getKey();
+                final V value = entry.getValue();
+
+                if (keyPredicate.test(key)) {
+                    output.put(key, value);
+                }
+            }
+
+            return output;
+        }
+    }
+
     public static <K extends Comparable, V extends Comparable> Comparator<Map<K, V>> mapComparator() {
         return mapComparator(Comparator.<K>naturalOrder(), Comparator.<V>naturalOrder());
     }
 
     public static <K, V> Comparator<Map<K, V>> mapComparator(Comparator<K> keyComparator, Comparator<V> valueComparator) {
         return new MapComparator<>(keyComparator, valueComparator);
+    }
+    
+    public static <K,V> BiFunction<Map<K, V>, Predicate<K>, Map<K, V>> keyFilterer() {
+        return new KeyFilter<>();
+    }
+    
+    public static <K,V> Map<K,V> filterKeys(Map<K,V> input, Predicate<K> keyPredicate) {
+        return Maps.<K,V>keyFilterer().apply(input, keyPredicate);
     }
 }

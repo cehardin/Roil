@@ -14,17 +14,21 @@
  * You should have received a copy of the GNU Affero General Public License along with
  * Roil. If not, see <http://www.gnu.org/licenses/>
  */
-package cehardin.roil.domain;
+package cehardin.roil;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 
 /**
  *
  * @author Chad
  */
-abstract class AbstractIteratorBasedFiniteDomain<T> extends AbstractIteratorBasedDomain<T> {
-
-    @Override
-    public boolean isFinite() {
-        return true;
-    }
+public interface Projectable<T> {
+     
+    Function<Predicate<AttributeName>, T> getProjector();
     
+    default T project(Predicate<AttributeName> attributeNamePredicate) {
+        return getProjector().apply(attributeNamePredicate);
+    }
 }

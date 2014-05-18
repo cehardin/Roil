@@ -16,15 +16,21 @@
  */
 package cehardin.roil;
 
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Tuples reside in a schema.  One can think of a tuple as a
  * "row" in a "table"
  * @author Chad
  */
-public final class Tuple implements Comparable<Tuple> {
+public final class Tuple implements Comparable<Tuple>, Projectable<Tuple> {
     private final Values values;
     
     public Tuple(Values values) {
@@ -38,7 +44,11 @@ public final class Tuple implements Comparable<Tuple> {
     public Values getValues() {
         return values;
     }
-    
+
+    @Override
+    public Function<Predicate<AttributeName>, Tuple> getProjector() {
+        return (p) -> new Tuple(values.project(p));
+    }
     
     @Override
     public int compareTo(Tuple o) {

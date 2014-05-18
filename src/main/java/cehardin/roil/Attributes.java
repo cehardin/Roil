@@ -16,37 +16,38 @@
  */
 package cehardin.roil;
 
-
-import cehardin.roil.util.Maps;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Collections.unmodifiableMap;
 import static cehardin.roil.util.Maps.mapComparator;
+import static cehardin.roil.util.Maps.filterKeys;
 
 /**
- * An attribute is a combination of a Name and a domain.
- * The {@link RelationSchema} contains a set of attributes
- * to define the "fields" that are present in a relation using that
- * schema.
+ * An attribute is a combination of an Attribute Name and a Domain.
+ * <p>
  * @author Chad
  * @see RelationSchema
  */
-public final class Attributes implements Comparable<Attributes> {
+public final class Attributes implements Comparable<Attributes>, Projectable<Attributes> {
+
     private static final Comparator<Map<AttributeName, Domain<?>>> mapComparator = mapComparator();
+
     private final Map<AttributeName, Domain<?>> map;
 
     public Attributes(Map<AttributeName, Domain<?>> map) {
         this.map = unmodifiableMap(new HashMap<AttributeName, Domain<?>>(requireNonNull(map, "The map was null")));
-        
-        if(this.map.containsKey(null)) {
+
+        if (this.map.containsKey(null)) {
             throw new NullPointerException("The map contained a null key");
         }
-        
-        if(this.map.containsValue(null)) {
+
+        if (this.map.containsValue(null)) {
             throw new NullPointerException("The map contained one or more null values");
         }
     }
@@ -54,16 +55,15 @@ public final class Attributes implements Comparable<Attributes> {
     public Map<AttributeName, Domain<?>> getMap() {
         return map;
     }
-    
+
+    @Override
+    public Function<Predicate<AttributeName>, Attributes> getProjector() {
+        return (p) -> new Attributes(filterKeys(map, p));
+    }
     
     @Override
     public int compareTo(Attributes o) {
-        if(o == null) {
-            return 1;
-        }
-        else {
-            return mapComparator.compare(map, o.map);
-        }
+        return o == null ? 1 : mapComparator.compare(map, o.map);
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class Attributes implements Comparable<Attributes> {
     @Override
     public boolean equals(Object o) {
         final boolean result;
-        
+
         if (o == null) {
             result = false;
         } else if (o == this) {
@@ -85,7 +85,7 @@ public final class Attributes implements Comparable<Attributes> {
         } else {
             result = false;
         }
-        
+
         return result;
     }
 

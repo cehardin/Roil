@@ -26,76 +26,87 @@ import static cehardin.roil.util.Maps.mapComparator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static java.util.Objects.*;
+
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import static java.lang.String.format;
+import static cehardin.roil.util.Maps.filterKeys;
 
 /**
  *
  * @author Chad
  */
-public final class Values implements Comparable<Values> {
+public final class Values implements Comparable<Values>, Projectable<Values> {
+
     private final Map<AttributeName, Value<?>> map;
     private final Map<AttributeName, Domain<?>> domains;
-    
+
     public Values(Map<AttributeName, Value<?>> map) {
         final Map<AttributeName, Domain<?>> domains = new HashMap<>();
         this.map = unmodifiableMap(new HashMap<AttributeName, Value<?>>(requireNonNull(map, "Map was null")));
-        
-        if(this.map.containsKey(null)) {
+
+        if (this.map.containsKey(null)) {
             throw new IllegalArgumentException("Values map contains a null key");
         }
-        if(this.map.containsValue(null)) {
+        if (this.map.containsValue(null)) {
             throw new IllegalArgumentException("Values map contains null value(s)");
         }
-        
-        for(final Entry<AttributeName, Value<?>> nameValue : map.entrySet()) {
+
+        for (final Entry<AttributeName, Value<?>> nameValue : map.entrySet()) {
             final AttributeName name = nameValue.getKey();
             final Domain<?> domain = nameValue.getValue().getDomain();
-            
+
             domains.put(name, domain);
         }
-        
+
         this.domains = unmodifiableMap(domains);
     }
-    
+
     public Map<AttributeName, Value<?>> getMap() {
         return map;
     }
-    
+
     public Map<AttributeName, Domain<?>> getDomainMap() {
         return domains;
     }
-    
-      @Override
+
+    @Override
+    public Function<Predicate<AttributeName>, Values> getProjector() {
+        return (p) -> new Values(filterKeys(map, p));
+    }
+
+    @Override
     public int compareTo(Values o) {
         return o == null ? 1 : compare(map, o.map, mapComparator());
     }
-    
+
     @Override
     public int hashCode() {
         return map.hashCode();
     }
-    
+
     @Override
     public boolean equals(Object o) {
         final boolean result;
-        
-        if(o == null) {
+
+        if (o == null) {
             result = false;
-        }
-        else if(o == this) {
+        } else if (o == this) {
             result = true;
-        }
-        else if(getClass().isInstance(o)) {
+        } else if (getClass().isInstance(o)) {
             final Values other = getClass().cast(o);
             result = map.equals(other.map);
-        }
-        else {
+        } else {
             result = false;
         }
-        
+
         return result;
     }
-    
+
     @Override
     public String toString() {
         return format("%s : map=%s", super.toString(), map);

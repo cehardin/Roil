@@ -16,20 +16,30 @@
  */
 package cehardin.roil;
 
+import cehardin.roil.Domain.BooleanOperator;
+
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import static java.util.Collections.unmodifiableSet;
+import static java.util.Collections.unmodifiableMap;
+import static cehardin.roil.util.Predicates.curryBiPredicate;
 
 import cehardin.roil.exception.ValueNotInDomainException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.lang.String.format;
 
@@ -79,16 +89,25 @@ public final class Value<T> implements Comparable<Value<T>> {
             return (T)invokeCloneMethod(o);
         }
     }
+    
+    
 
     private final Domain<T> domain;
     private final T data;
+    private final Map<BooleanOperator, Predicate<T>> booleanOperators;
     
 
     public Value(Domain<T> domain, T data) throws ValueNotInDomainException {
+        final Map<BooleanOperator, Predicate<T>> booleanOperators = new HashMap<>();
         this.data = clone(requireNonNull(data, "The data was null"));
         this.domain = requireNonNull(domain, "The domain was null");
-
         this.domain.check(this.data);
+        
+        for(final Entry<BooleanOperator, BiPredicate<T,T>> entry : this.domain.getBooleanOperators().entrySet()) {
+            booleanOperators.put(entry.getKey(), curryBiPredicate(entry.getValue(), this.data));
+        }
+        
+        this.booleanOperators = unmodifiableMap(booleanOperators);
     }
 
     /**
@@ -105,6 +124,10 @@ public final class Value<T> implements Comparable<Value<T>> {
      */
     public Domain<T> getDomain() {
         return domain;
+    }
+    
+    Map<BooleanOperator, Predicate<T>> getBooleanOperators() {
+        return booleanOperators;
     }
 
     @Override

@@ -23,7 +23,7 @@ import java.util.Set;
  * to a {@link RelationSchema}.
  * @author Chad
  */
-public interface Relation extends Comparable<Relation> {
+public interface Relation extends Comparable<Relation>, Projectable<Relation> {
 
     /**
      * Get this relation's schema.
