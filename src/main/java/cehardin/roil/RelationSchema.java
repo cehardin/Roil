@@ -27,6 +27,7 @@ import static cehardin.roil.util.Optionals.optionalComparator;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * The schema for a relation. One can think of this as the definition of what
@@ -35,7 +36,7 @@ import java.util.function.Predicate;
  * @author Chad
  * @see Relation
  */
-public final class RelationSchema implements Comparable<RelationSchema>, Projectable<RelationSchema> {
+public final class RelationSchema implements Comparable<RelationSchema>, Projectable<RelationSchema>, Renamable<RelationSchema> {
 
     private final Attributes attributes;
     private final Optional<PrimaryKey> primaryKey;
@@ -48,13 +49,22 @@ public final class RelationSchema implements Comparable<RelationSchema>, Project
     }
 
     @Override
-    public Function<Predicate<AttributeName>, RelationSchema> getProjector() {
+    public Function<Predicate<AttributeName>, RelationSchema> getProjectFunction() {
         return (p) -> new RelationSchema(
-                attributes.project(p), 
-                primaryKey.isPresent() && p.test(primaryKey.get().getAttributeName()) ? primaryKey : Optional.empty(),
-                secondaryKeys.project(p));
+                        attributes.project(p), 
+                        primaryKey.isPresent() ? primaryKey.get().project(p) : Optional.empty(), 
+                        secondaryKeys.project(p));
     }
 
+    @Override
+    public Function<UnaryOperator<AttributeName>, RelationSchema> getRenameFunction() {
+        return (f) -> new RelationSchema(
+                            attributes.rename(f), 
+                            primaryKey.isPresent() ? Optional.of(primaryKey.get().rename(f)) : Optional.empty(), 
+                            secondaryKeys.rename(f));
+    }
+
+    
     /**
      * Get the attributes of this schema
      * <p>

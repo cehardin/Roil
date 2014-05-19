@@ -22,11 +22,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Arrays.asList;
+import static java.lang.String.format;
 
 /**
  *
@@ -45,5 +47,19 @@ public class Sets {
         
         
         return unmodifiableSet(newSet);
+    }
+    
+    public static <T> Set<T> transform(Set<T> input, UnaryOperator<T> transformer) {
+        final Set<T> output = new HashSet<>();
+        
+        for(final T element : input) {
+            final T newElement = transformer.apply(element);
+            
+            if(!output.add(newElement)) {
+                throw new IllegalStateException(format("Transformer %s returned output %s more than once, this time on input %s", transformer, newElement, element));
+            }
+        }
+        
+        return output;
     }
 }

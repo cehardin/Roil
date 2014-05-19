@@ -36,15 +36,17 @@ import static java.util.Objects.*;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static java.lang.String.format;
 import static cehardin.roil.util.Maps.filterKeys;
+import static cehardin.roil.util.Maps.transformKeys;
 
 /**
  *
  * @author Chad
  */
-public final class Values implements Comparable<Values>, Projectable<Values>, Selectable<Values> {
+public final class Values implements Comparable<Values>, Projectable<Values>, Renamable<Values> {
 
     private final Map<AttributeName, Value<Object>> map;
     private final Map<AttributeName, Domain<Object>> domains;
@@ -79,64 +81,14 @@ public final class Values implements Comparable<Values>, Projectable<Values>, Se
     }
 
     @Override
-    public Function<Predicate<AttributeName>, Values> getProjector() {
+    public Function<Predicate<AttributeName>, Values> getProjectFunction() {
         return (p) -> new Values(filterKeys(map, p));
     }
 
     @Override
-    public Set<AttributeName> getAttributeNames() {
-        return getMap().keySet();
+    public Function<UnaryOperator<AttributeName>, Values> getRenameFunction() {
+        return (f) -> new Values(transformKeys(map, f));
     }
-
-    @Override
-    public Function<SelectByAttribute, Values> getSelectByAttributeFunction() {
-        return (s) -> {
-            final BooleanOperator operator = s.getOperator();
-            final AttributeName targetAttributeName = s.getTargetAttributeName();
-            final AttributeName attributeName = s.getAttributeName();
-            final Value<Object> targetValue = getMap().get(targetAttributeName);
-            final Value<Object> value = getMap().get(attributeName);
-            
-            if(targetValue == null) {
-                throw new NoSuchAttributeNameException(format("The target attribute %s is not present in this tuple", targetAttributeName));
-            }
-            
-            if(value == null) {
-                throw new NoSuchAttributeNameException(format("The attribute %s is not present in this tuple", attributeName));
-            }
-            
-            if(targetValue.getBooleanOperators().get(operator).test(value)) {
-                return this;
-            }
-            else {
-                return new Values(emptyMap());
-            }  
-        };
-    }
-
-    @Override
-    public Function<SelectByConstant, Values> getSelectByConstantFunction() {
-        return (s) -> {
-            final BooleanOperator operator = s.getOperator();
-            final AttributeName targetAttributeName = s.getTargetAttributeName();
-            final Value<Object> targetValue = getMap().get(targetAttributeName);
-            final Value<Object> value = s.getConstant();
-            
-            if(targetValue == null) {
-                throw new NoSuchAttributeNameException(format("The target attribute %s is not present in this tuple", targetAttributeName));
-            }
-            
-            
-            if(targetValue.getBooleanOperators().get(operator).test(value)) {
-                return this;
-            }
-            else {
-                return new Values(emptyMap());
-            }  
-        };
-    }
-    
-    
 
     @Override
     public int compareTo(Values o) {

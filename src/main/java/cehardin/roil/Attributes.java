@@ -21,12 +21,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Collections.unmodifiableMap;
 import static cehardin.roil.util.Maps.mapComparator;
 import static cehardin.roil.util.Maps.filterKeys;
+import static cehardin.roil.util.Maps.transformKeys;
 
 /**
  * An attribute is a combination of an Attribute Name and a Domain.
@@ -34,7 +36,7 @@ import static cehardin.roil.util.Maps.filterKeys;
  * @author Chad
  * @see RelationSchema
  */
-public final class Attributes implements Comparable<Attributes>, Projectable<Attributes> {
+public final class Attributes implements Comparable<Attributes>, Projectable<Attributes>, Renamable<Attributes> {
 
     private static final Comparator<Map<AttributeName, Domain<?>>> mapComparator = mapComparator();
 
@@ -57,10 +59,17 @@ public final class Attributes implements Comparable<Attributes>, Projectable<Att
     }
 
     @Override
-    public Function<Predicate<AttributeName>, Attributes> getProjector() {
+    public Function<Predicate<AttributeName>, Attributes> getProjectFunction() {
         return (p) -> new Attributes(filterKeys(map, p));
     }
+
+    @Override
+    public Function<UnaryOperator<AttributeName>, Attributes> getRenameFunction() {
+        return (f) -> new Attributes(transformKeys(map, f));
+    }
+
     
+
     @Override
     public int compareTo(Attributes o) {
         return o == null ? 1 : mapComparator.compare(map, o.map);

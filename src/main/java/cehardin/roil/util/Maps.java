@@ -16,6 +16,7 @@
  */
 package cehardin.roil.util;
 
+import cehardin.roil.algebra.Select.Operator;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -23,9 +24,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static java.util.Objects.requireNonNull;
+import static java.lang.String.format;
 
 /**
  *
@@ -97,6 +101,7 @@ public final class Maps {
     }
 
     private static class KeyFilter<K, V> implements BiFunction<Map<K, V>, Predicate<K>, Map<K, V>> {
+
         @Override
         public Map<K, V> apply(Map<K, V> input, Predicate<K> keyPredicate) {
             final HashMap<K, V> output = new HashMap<>();
@@ -122,12 +127,44 @@ public final class Maps {
     public static <K, V> Comparator<Map<K, V>> mapComparator(Comparator<K> keyComparator, Comparator<V> valueComparator) {
         return new MapComparator<>(keyComparator, valueComparator);
     }
-    
-    public static <K,V> BiFunction<Map<K, V>, Predicate<K>, Map<K, V>> keyFilterer() {
+
+    public static <K, V> BiFunction<Map<K, V>, Predicate<K>, Map<K, V>> keyFilterer() {
         return new KeyFilter<>();
     }
-    
-    public static <K,V> Map<K,V> filterKeys(Map<K,V> input, Predicate<K> keyPredicate) {
-        return Maps.<K,V>keyFilterer().apply(input, keyPredicate);
+
+    public static <K, V> Map<K, V> filterKeys(Map<K, V> input, Predicate<K> keyPredicate) {
+        return Maps.<K, V>keyFilterer().apply(input, keyPredicate);
+    }
+
+    public static <K, V> Map<K, V> transformKeys(Map<K, V> input, UnaryOperator<K> keyTransformer) {
+        final Map<K, V> output = new HashMap<>();
+
+        for (final Entry<K, V> e : input.entrySet()) {
+            final K key = e.getKey();
+            final V value = e.getValue();
+            final K newKey = keyTransformer.apply(key);
+
+            if (output.put(newKey, value) != null) {
+                throw new IllegalStateException(format("Key Transformer %s returned %s on input %s when it has already returned %s before", keyTransformer, newKey, key, newKey));
+            }
+        }
+
+        return output;
+    }
+
+    public static <K1, K2, V> Map<K2, V> transformKeys(Map<K1, V> input, Function<K1, K2> keyTransformer) {
+        final Map<K2, V> output = new HashMap<>();
+
+        for (final Entry<K1, V> e : input.entrySet()) {
+            final K1 key = e.getKey();
+            final V value = e.getValue();
+            final K2 newKey = keyTransformer.apply(key);
+
+            if (output.put(newKey, value) != null) {
+                throw new IllegalStateException(format("Key Transformer %s returned %s on input %s when it has already returned %s before", keyTransformer, newKey, key, newKey));
+            }
+        }
+
+        return output;
     }
 }

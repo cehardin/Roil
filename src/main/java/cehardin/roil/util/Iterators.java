@@ -22,7 +22,11 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Comparator.naturalOrder;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  *
@@ -89,6 +93,80 @@ public class Iterators {
             return iterator.next();
         }
     }
+    
+    private static final class TransformingIterator<E1, E2> implements Iterator<E2> {
+        private final Iterator<E1> iterator;
+        private final Function<E1,E2> transformer;
+        
+        public TransformingIterator(Iterator<E1> iterator, Function<E1, E2> transformer) {
+            this.iterator = requireNonNull(iterator, "Iterator was null");
+            this.transformer = requireNonNull(transformer, "Transformer was null");
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public E2 next() {
+            return transformer.apply(iterator.next());
+        }
+
+        @Override
+        public void remove() {
+            iterator.remove();
+        }
+    }
+    
+    private static final class FilteredIterator<E> implements Iterator<E> {
+        private final Iterator<E> iterator;
+        private final Predicate<E> filter;
+        private boolean foundNext;
+        private E next;
+        
+        public FilteredIterator(Iterator<E> iterator, Predicate<E> filter) {
+            this.iterator = requireNonNull(iterator, "Iterator was null");
+            this.filter = requireNonNull(filter, "Filter was null");
+            this.foundNext = false;
+            this.next = null;
+        }
+
+        @Override
+        public boolean hasNext() {
+            while(!foundNext) {
+                if(iterator.hasNext()) {
+                    final E e = iterator.next();
+                    if(filter.test(e)) {
+                        next = e;
+                        foundNext = true;
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            
+            return foundNext;
+        }
+
+        @Override
+        public E next() {
+            if(!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            else {
+                foundNext = false;
+                return next;
+            }
+        }
+
+        @Override
+        public void remove() {
+            iterator.remove();
+        }
+    }
 
     public static final <E extends Comparable> Comparator<Iterator<E>> iteratorComparator() {
         return new IteratorComparator<>(naturalOrder());
@@ -100,5 +178,14 @@ public class Iterators {
     
     public static final <E> Iterator<E> readOnlyIterator(Iterator<E> iterator) {
         return new ReadOnlyIterator<>(iterator);
+    }
+    
+    public static final <E1,E2> Iterator<E2> transform(Iterator<E1> iterator, Function<E1,E2> transformer) {
+        return new TransformingIterator<>(iterator, transformer);
+    }
+    
+    public static final <E> Iterator<E> filter(Iterator<E> iterator, Predicate<E> filter) {
+        return new FilteredIterator<>(iterator, filter);
+                
     }
 }

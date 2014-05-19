@@ -18,33 +18,30 @@ package cehardin.roil;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
-
 
 /**
  *
  * @author Chad
  */
-public interface Projectable<T> {
+public interface Renamable<T> {
+    static <T extends Renamable<T>> BiFunction<T, UnaryOperator<AttributeName>, T> getRenameBiFunction() {
+        return (t,f) -> t.getRenameFunction().apply(f);
+    };
     
-    static <T extends Projectable<T>> BiFunction<T, Predicate<AttributeName>, T> getProjectBiFunction() {
-        
-        return (t,p) -> t.getProjectFunction().apply(p);
+    static <T extends Renamable<T>> UnaryOperator<T> getRenameUnaryOperator(UnaryOperator<AttributeName> renameFunction) {
+        return (t) -> t.getRenameFunction().apply(renameFunction);
     }
     
-    static <T extends Projectable<T>> UnaryOperator<T> getProjectUnaryOperator(Predicate<AttributeName> attributeNamePredicate) {
-        return (t) -> t.getProjectFunction().apply(attributeNamePredicate);
+    
+    Function<UnaryOperator<AttributeName>, T> getRenameFunction();
+    
+    default Supplier<T> getRenameSupplier(UnaryOperator<AttributeName> renameFunction) {
+        return () -> getRenameFunction().apply(renameFunction);
     }
     
-    Function<Predicate<AttributeName>, T> getProjectFunction();
-    
-    default Supplier<T> getProjectSupplier(Predicate<AttributeName> attributeNamePredicate) {
-        return () -> getProjectFunction().apply(attributeNamePredicate);
-    }
-    
-    default T project(Predicate<AttributeName> attributeNamePredicate) {
-        return getProjectFunction().apply(attributeNamePredicate);
+    default T rename(UnaryOperator<AttributeName> renameFunction) {
+        return getRenameFunction().apply(renameFunction);
     }
 }

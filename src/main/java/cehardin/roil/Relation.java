@@ -19,17 +19,19 @@ package cehardin.roil;
 import java.util.Set;
 
 /**
- * A relation is like a "table".  It contains "rows" ({@link Tuple}) and conforms
+ * A relation is like a "table". It contains "rows" ({@link Tuple}) and conforms
  * to a {@link RelationSchema}.
+ * <p>
  * @author Chad
  */
-public interface Relation extends Comparable<Relation>, Projectable<Relation> {
+public interface Relation extends Comparable<Relation>, Projectable<Relation>, Selectable<Relation>, Renamable<Relation>, Deletable<Relation>, Modifiable<Relation> {
 
     /**
      * Get this relation's schema.
+     * <p>
      * @return This relation's schema, never null.
      */
     RelationSchema getSchema();
-
+    
     Set<Tuple> getTuples();
 }

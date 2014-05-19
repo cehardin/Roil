@@ -20,9 +20,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static cehardin.roil.util.Iterables.iterableComparator;
 import static cehardin.roil.util.Sets.filter;
+import static cehardin.roil.util.Sets.transform;
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableSet;
@@ -32,7 +34,7 @@ import static java.util.Objects.compare;
  *
  * @author Chad
  */
-public final class SecondaryKeys implements Comparable<SecondaryKeys>, Projectable<SecondaryKeys> {
+public final class SecondaryKeys implements Comparable<SecondaryKeys>, Projectable<SecondaryKeys>, Renamable<SecondaryKeys> {
 
     private final Set<SecondaryKey> set;
 
@@ -48,17 +50,14 @@ public final class SecondaryKeys implements Comparable<SecondaryKeys>, Projectab
     }
 
     @Override
-    public Function<Predicate<AttributeName>, SecondaryKeys> getProjector() {
-        return (p) -> {
-            final Set<SecondaryKey> newSet = new HashSet<>();
-            set.stream().map((secondaryKey) -> secondaryKey.project(p)).forEach((newSecondaryKey) -> {
-                newSet.add(newSecondaryKey);
-            });
-            return new SecondaryKeys(newSet);
-        };
+    public Function<Predicate<AttributeName>, SecondaryKeys> getProjectFunction() {
+        return (p) -> new SecondaryKeys(transform(set, Projectable.getProjectUnaryOperator(p)));
     }
-    
-    
+
+    @Override
+    public Function<UnaryOperator<AttributeName>, SecondaryKeys> getRenameFunction() {
+        return (f) -> new SecondaryKeys(transform(set, Renamable.getRenameUnaryOperator(f)));
+    }
 
     @Override
     public int compareTo(SecondaryKeys o) {

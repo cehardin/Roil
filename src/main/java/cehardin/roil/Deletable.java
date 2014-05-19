@@ -14,26 +14,34 @@
  * You should have received a copy of the GNU Affero General Public License along with
  * Roil. If not, see <http://www.gnu.org/licenses/>
  */
-package cehardin.roil.algebra;
+package cehardin.roil;
 
-import cehardin.roil.Relation;
-import cehardin.roil.Tuple;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
  *
  * @author Chad
  */
-public interface AlgebraOperatorFactory {
-    UnaryOperator<Relation> createAdd(Tuple tuple);
+public interface Deletable<T> {
     
-    UnaryOperator<Relation> createDelete(Tuple tuple);
+    static <T extends Deletable<T>> BiFunction<T, Tuple, T> getDeleteBiFunction() {
+        return (t, tuple) -> t.getDeleteFunction().apply(tuple);
+    }
     
-    UnaryOperator<Relation> createModify(Modify modify);
+    static <T extends Deletable<T>> UnaryOperator<T> getDeleteUnaryOperator(final Tuple tuple) {
+        return (t) -> t.getDeleteFunction().apply(tuple);
+    }
     
-    UnaryOperator<Relation> createSelect(Select select);
+    Function<Tuple, T> getDeleteFunction();
     
-    UnaryOperator<Relation> createProject(Project project);
+    default Supplier<T> getDeleteSupplier(final Tuple tuple) {
+        return () -> getDeleteFunction().apply(tuple);
+    }
     
-    UnaryOperator<Relation> createRename(Rename rename);
+    default T delete(final Tuple tuple) {
+        return getDeleteFunction().apply(tuple);
+    }
 }

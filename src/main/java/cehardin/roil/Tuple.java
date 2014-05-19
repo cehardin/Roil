@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
@@ -30,7 +31,7 @@ import static java.util.Objects.requireNonNull;
  * "row" in a "table"
  * @author Chad
  */
-public final class Tuple implements Comparable<Tuple>, Projectable<Tuple>, Selectable<Tuple> {
+public final class Tuple implements Comparable<Tuple>, Projectable<Tuple>, Renamable<Tuple> {
     private final Values values;
     
     public Tuple(Values values) {
@@ -46,27 +47,14 @@ public final class Tuple implements Comparable<Tuple>, Projectable<Tuple>, Selec
     }
 
     @Override
-    public Function<Predicate<AttributeName>, Tuple> getProjector() {
+    public Function<Predicate<AttributeName>, Tuple> getProjectFunction() {
         return (p) -> new Tuple(values.project(p));
     }
 
     @Override
-    public Set<AttributeName> getAttributeNames() {
-        return values.getMap().keySet();
-    }
-
-    
-    @Override
-    public Function<SelectByAttribute, Tuple> getSelectByAttributeFunction() {
-        return (s) -> new Tuple(values.getSelectByAttributeFunction().apply(s));
-    }
-
-    @Override
-    public Function<SelectByConstant, Tuple> getSelectByConstantFunction() {
-        return (s) -> new Tuple(values.getSelectByConstantFunction().apply(s));
-    }
-    
-    
+    public Function<UnaryOperator<AttributeName>, Tuple> getRenameFunction() {
+        return (f) -> new Tuple(values.rename(f));
+    }    
     
     @Override
     public int compareTo(Tuple o) {

@@ -16,6 +16,11 @@
  */
 package cehardin.roil;
 
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
 
@@ -23,7 +28,7 @@ import static java.lang.String.format;
  *
  * @author Chad
  */
-public final class PrimaryKey implements Comparable<PrimaryKey> {
+public final class PrimaryKey implements Comparable<PrimaryKey>, Projectable<Optional<PrimaryKey>>, Renamable<PrimaryKey> {
     private final AttributeName attributeName;
     
     public PrimaryKey(AttributeName attributeName) {
@@ -33,6 +38,17 @@ public final class PrimaryKey implements Comparable<PrimaryKey> {
     public AttributeName getAttributeName() {
         return attributeName;
     }
+
+    @Override
+    public Function<Predicate<AttributeName>, Optional<PrimaryKey>> getProjectFunction() {
+        return (p) -> p.test(attributeName) ? Optional.of(this) : Optional.empty();
+    }
+
+    @Override
+    public Function<UnaryOperator<AttributeName>, PrimaryKey> getRenameFunction() {
+        return (f) -> new PrimaryKey(f.apply(attributeName));
+    }
+    
     
     @Override
     public int compareTo(PrimaryKey other) {

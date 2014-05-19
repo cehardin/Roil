@@ -20,19 +20,21 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.compare;
 import static java.util.Collections.unmodifiableSet;
 import static cehardin.roil.util.Iterables.iterableComparator;
 import static cehardin.roil.util.Sets.filter;
+import static cehardin.roil.util.Sets.transform;
 import static java.lang.String.format;
 
 /**
  *
  * @author Chad
  */
-public final class SecondaryKey implements Comparable<SecondaryKey>, Projectable<SecondaryKey> {
+public final class SecondaryKey implements Comparable<SecondaryKey>, Projectable<SecondaryKey>, Renamable<SecondaryKey> {
     private final Set<AttributeName> attributeNames;
     
     public SecondaryKey(Set<AttributeName> attributeNames) {
@@ -47,8 +49,13 @@ public final class SecondaryKey implements Comparable<SecondaryKey>, Projectable
     }
 
     @Override
-    public Function<Predicate<AttributeName>, SecondaryKey> getProjector() {
+    public Function<Predicate<AttributeName>, SecondaryKey> getProjectFunction() {
         return (p) -> new SecondaryKey(filter(attributeNames, p));
+    }
+
+    @Override
+    public Function<UnaryOperator<AttributeName>, SecondaryKey> getRenameFunction() {
+        return (f) -> new SecondaryKey(transform(attributeNames, f));
     }
 
     @Override
