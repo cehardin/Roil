@@ -30,7 +30,7 @@ import static java.util.Objects.requireNonNull;
  * "row" in a "table"
  * @author Chad
  */
-public final class Tuple implements Comparable<Tuple>, Projectable<Tuple> {
+public final class Tuple implements Comparable<Tuple>, Projectable<Tuple>, Selectable<Tuple> {
     private final Values values;
     
     public Tuple(Values values) {
@@ -49,6 +49,24 @@ public final class Tuple implements Comparable<Tuple>, Projectable<Tuple> {
     public Function<Predicate<AttributeName>, Tuple> getProjector() {
         return (p) -> new Tuple(values.project(p));
     }
+
+    @Override
+    public Set<AttributeName> getAttributeNames() {
+        return values.getMap().keySet();
+    }
+
+    
+    @Override
+    public Function<SelectByAttribute, Tuple> getSelectByAttributeFunction() {
+        return (s) -> new Tuple(values.getSelectByAttributeFunction().apply(s));
+    }
+
+    @Override
+    public Function<SelectByConstant, Tuple> getSelectByConstantFunction() {
+        return (s) -> new Tuple(values.getSelectByConstantFunction().apply(s));
+    }
+    
+    
     
     @Override
     public int compareTo(Tuple o) {

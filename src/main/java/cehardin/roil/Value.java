@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.lang.String.format;
@@ -94,17 +93,17 @@ public final class Value<T> implements Comparable<Value<T>> {
 
     private final Domain<T> domain;
     private final T data;
-    private final Map<BooleanOperator, Predicate<T>> booleanOperators;
+    private final Map<BooleanOperator, Predicate<Value<T>>> booleanOperators;
     
 
     public Value(Domain<T> domain, T data) throws ValueNotInDomainException {
-        final Map<BooleanOperator, Predicate<T>> booleanOperators = new HashMap<>();
+        final Map<BooleanOperator, Predicate<Value<T>>> booleanOperators = new HashMap<>();
         this.data = clone(requireNonNull(data, "The data was null"));
         this.domain = requireNonNull(domain, "The domain was null");
         this.domain.check(this.data);
         
         for(final Entry<BooleanOperator, BiPredicate<T,T>> entry : this.domain.getBooleanOperators().entrySet()) {
-            booleanOperators.put(entry.getKey(), curryBiPredicate(entry.getValue(), this.data));
+            booleanOperators.put(entry.getKey(), (v) -> entry.getValue().test(this.data, v.data));
         }
         
         this.booleanOperators = unmodifiableMap(booleanOperators);
@@ -126,7 +125,7 @@ public final class Value<T> implements Comparable<Value<T>> {
         return domain;
     }
     
-    Map<BooleanOperator, Predicate<T>> getBooleanOperators() {
+    Map<BooleanOperator, Predicate<Value<T>>> getBooleanOperators() {
         return booleanOperators;
     }
 
